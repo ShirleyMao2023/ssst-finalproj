@@ -235,9 +235,6 @@ app.post("/api/checkUser", (require, response) => {
       console.log("Clicked Lookup ");
 });
 
-app.listen(3002, () => {
-    console.log("running on port 3002");
-})
 
 
 // DELIMITER //

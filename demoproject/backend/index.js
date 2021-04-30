@@ -36,9 +36,11 @@ connection.connect(function(err) {
     console.log("connection success");
   });
 
+require('dotenv').config();
+
 app.get('/', (require, response) => {
     response.send("Hello world!!!");
-})
+});
 
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));

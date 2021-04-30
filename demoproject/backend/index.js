@@ -5,14 +5,30 @@ const mysql = require("mysql");
 const cors = require("cors");
 
 
-var db = mysql.createConnection({
-    host:'35.226.42.138',
-    user: 'root',
-    password:'Mhz1KjwHvseamjt7',
-    database:'SongSearch',
-})
+// Database Connection for Production
 
-db.connect(function(err) {
+let config = {
+    user: 'root',
+    database: 'SongSearch',
+    password: 'Mhz1KjwHvseamjt7',
+}
+
+if (process.env.INSTANCE_CONNECTION_NAME && process.env.NODE_ENV === 'production') {
+  config.socketPath = `/cloudsql/${'ssst-finalproj:us-central1:ssst-proj'}`;
+}
+
+let connection = mysql.createConnection(config);
+
+// Database Connection for Development
+
+// var db = mysql.createConnection({
+//     host:'35.226.42.138',
+//     user: 'root',
+//     password:'Mhz1KjwHvseamjt7',
+//     database:'SongSearch',
+// })
+
+connection.connect(function(err) {
     if (err) throw err;
     var sql = "SELECT Count(*) FROM artist";
     db.query(sql, function (err, rows) {

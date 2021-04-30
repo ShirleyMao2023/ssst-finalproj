@@ -1,3 +1,20 @@
+const functions = require("firebase-functions");
+
+// // Create and Deploy Your First Cloud Functions
+// // https://firebase.google.com/docs/functions/write-firebase-functions
+//
+// exports.helloWorld = functions.https.onRequest((request, response) => {
+//   functions.logger.info("Hello logs!", {structuredData: true});
+//   response.send("Hello from Firebase!");
+// });
+
+// const express = require("express");
+// const app = express();
+// app.get("*", (req, res) => {
+//   res.send("Hello from the API");
+// });
+// exports.api = functions.https.onRequest(app);
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
@@ -5,131 +22,19 @@ const mysql = require("mysql");
 const cors = require("cors");
 
 
-// Database Connection for Production
+let config = {
+    user: process.env.SQL_USER,
+    database: process.env.SQL_DATABASE,
+    password: process.env.SQL_PASSWORD,
+}
 
-// let config = {
-//     user: process.env.DB_USER,
-//     database: process.env.DB_NAME,
-//     password: process.env.DB_PASS,
-// }
-
-// if (process.env.INSTANCE_CONNECTION_NAME) {
-//   config.socketPath = `/cloudsql/${process.env.INSTANCE_CONNECTION_NAME}`;
-// }
-
-
-// let connection = mysql.createConnection(config);
-
-
-
-// // Database Connection for Development
-
-// // var db = mysql.createConnection({
-// //     host:'35.226.42.138',
-
-// // })
-
-// connection.connect(function(err) {
-//     if (err) throw err;
-//     var sql = "SELECT Count(*) FROM artist";
-//     db.query(sql, function (err, rows) {
-//       if (err) throw err;
-//       console.log(JSON.stringify(rows) + " Things in Artist Table");
-//     });
-//     console.log("connection success");
-//   });
-
-// require('dotenv').config();
-
-const createUnixSocketPool = async config => {
-  const dbSocketPath = process.env.DB_SOCKET_PATH || '/cloudsql';
-
-  // Establish a connection to the database
-  return await mysql.createPool({
-    user: process.env.DB_USER, // e.g. 'my-db-user'
-    password: process.env.DB_PASS, // e.g. 'my-db-password'
-    database: process.env.DB_NAME, // e.g. 'my-database'
-    // If connecting via unix domain socket, specify the path
-    socketPath: `${dbSocketPath}/${process.env.CLOUD_SQL_CONNECTION_NAME}`,
-    // Specify additional properties here.
-  });
-};
-
-app.get('/', (require, response) => {
-    response.send("Hello world!!!");
-});
+if (process.env.INSTANCE_CONNECTION_NAME && process.env.NODE_ENV === 'production') {
+  config.socketPath = `/cloudsql/${process.env.INSTANCE_CONNECTION_NAME}`;
+}
 
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
-
-app.get("/api/get", (require, response) => {
-    var sql = "Select DISTINCT COUNT(Song.SongId) SongNum, Song.Genre_Name "+
-    "FROM Query JOIN Song on Query.SongId = Song.SongId " + 
-    "GROUP BY Song.Genre_Name " +
-    "ORDER BY SongNum ASC " +
-    "LIMIT 15;";
-    db.query(sql, function (err, rows) {
-      if (err) throw err;
-      response.send(rows);
-    });
-    console.log("Clicked AdvSearch");
-});
-app.get("/api/popular", (require, response) => {
-    var sql = "Select * FROM NewTable1 "+
-    "WHERE year_popularity LIKE 'Popular' " + 
-    "LIMIT 5;";
-    db.query(sql, function (err, rows) {
-      if (err) throw err;
-      response.send(rows);
-    });
-    console.log("Clicked AdvSearch");
-});
-app.get("/api/popular2", (require, response) => {
-    var sql = "Select * FROM NewTable2 "+
-    "WHERE artist_popularity LIKE 'Popular' " + 
-    "LIMIT 5;";
-    db.query(sql, function (err, rows) {
-      if (err) throw err;
-      response.send(rows);
-    });
-    console.log("Clicked AdvSearch");
-});
-app.get("/api/popular3", (require, response) => {
-    var sql = "Select * FROM NewTable3 "+
-    "WHERE genre_popularity LIKE 'Popular' " +
-    "ORDER BY genre_name DESC "+ 
-    "LIMIT 5;";
-    db.query(sql, function (err, rows) {
-      if (err) throw err;
-      response.send(rows);
-    });
-    console.log("Clicked AdvSearch");
-});
-
-app.post("/api/insert", (require, response) => {
-    const songName = require.body.songName;
-    const year = require.body.year;
-    const genre = require.body.genre;
-    const length = require.body.length;
-    const explicit = require.body.explicit;
-    const artistID = require.body.artistID;
-    const mode = require.body.mode;
-    var exp = explicit ? 1 : 0;
-    strMssg = "";
-
-    const sqlInsert = "INSERT INTO Song (SongId, Song_Name, ArtistID,Release_year, Length, Explicit, Mode, Genre_Name) VALUES (?,?,?,?,?,?,?,?)";
-    const tableCount = "SELECT Count(*) FROM Song";
-    db.query(sqlInsert, ["",songName,artistID, parseInt(year), parseInt(length), exp, parseInt(mode), genre], function (err, rows) {
-        if (err) throw err;
-        console.log("Success! " + JSON.stringify(rows));
-      });
-    // db.query(tableCount, function (err, rows) {
-    //     if (err) throw err;
-    //     response.send(strMssg + "After => " +JSON.stringify(rows));
-    //     console.log("After => " + JSON.stringify(rows));
-    // });    
-});
 
 app.post("/api/search", (require, response) => {
     console.log("Searching");
@@ -187,116 +92,123 @@ app.post("/api/search", (require, response) => {
       });
       console.log("Clicked Search ");
 });
-app.post("/api/lookup", (require, response) => {
-    console.log("Lookup");
-    artist = require.body.artist;
+
+// app.post("/api/lookup", (require, response) => {
+//     console.log("Lookup");
+//     artist = require.body.artist;
     
-    const sqlSearch = "SELECT  ArtistId, Name FROM artist WHERE Name LIKE '%" + artist+"%'";
-    // console.log(sqlSearch)
-    db.query(sqlSearch, function (err, rows) {
-        if (err) throw err;
-        response.send(rows);
+//     const sqlSearch = "SELECT  ArtistId, Name FROM artist WHERE Name LIKE '%" + artist+"%'";
+//     // console.log(sqlSearch)
+//     db.query(sqlSearch, function (err, rows) {
+//         if (err) throw err;
+//         response.send(rows);
         
-      });
-      console.log("Clicked Lookup ");
-});
-app.post("/api/delete", (require, response) => {
-    console.log("deleteUser");
-    userID = require.body.userID;
+//       });
+//       console.log("Clicked Lookup ");
+// });
+// app.post("/api/delete", (require, response) => {
+//     console.log("deleteUser");
+//     userID = require.body.userID;
 
-    const sqlDelete = "DELETE FROM Account "+
-    " WHERE UserID LIKE '" + userID + "'";
-    console.log(sqlDelete);
-    db.query(sqlDelete, function (err, rows) {
-        if (err) throw err;
-        console.log("DELETE Success! " + JSON.stringify(rows));
-      });
-});
+//     const sqlDelete = "DELETE FROM Account "+
+//     " WHERE UserID LIKE '" + userID + "'";
+//     console.log(sqlDelete);
+//     db.query(sqlDelete, function (err, rows) {
+//         if (err) throw err;
+//         console.log("DELETE Success! " + JSON.stringify(rows));
+//       });
+// });
 
-app.put("/api/update/", (require, response) => {
-    const artistId = require.body.artistId;
-    const songNum = require.body.songNum;
-    const artistName = require.body.artistName;
-    strMssg = "";
-    const sqlQUERY = "SELECT * FROM artist WHERE ArtistId LIKE ?";
-    db.query(sqlQUERY, [artistId], (err, rows) => {
-        if (err) 
-        console.log(error);
-        strMssg += "Before => " +JSON.stringify(rows);
-    })
-    const sqlUpdate = "UPDATE artist SET song_num = ? WHERE ArtistId LIKE ? OR Name LIKE ?";
-    db.query(sqlUpdate, [songNum, artistId, artistName], (err, result) => {
-        if (err) 
-        console.log(error);
-    })
-    db.query(sqlQUERY, [artistId], (err, rows) => {
-        if (err) 
-        console.log(error);
-        response.send(strMssg + "After => " +JSON.stringify(rows));
-    })
-});
+// app.put("/api/update/", (require, response) => {
+//     const artistId = require.body.artistId;
+//     const songNum = require.body.songNum;
+//     const artistName = require.body.artistName;
+//     strMssg = "";
+//     const sqlQUERY = "SELECT * FROM artist WHERE ArtistId LIKE ?";
+//     db.query(sqlQUERY, [artistId], (err, rows) => {
+//         if (err) 
+//         console.log(error);
+//         strMssg += "Before => " +JSON.stringify(rows);
+//     })
+//     const sqlUpdate = "UPDATE artist SET song_num = ? WHERE ArtistId LIKE ? OR Name LIKE ?";
+//     db.query(sqlUpdate, [songNum, artistId, artistName], (err, result) => {
+//         if (err) 
+//         console.log(error);
+//     })
+//     db.query(sqlQUERY, [artistId], (err, rows) => {
+//         if (err) 
+//         console.log(error);
+//         response.send(strMssg + "After => " +JSON.stringify(rows));
+//     })
+// });
 
-app.post("/api/newUser", (require, response) => {
-    const name = require.body.name;
-    const email = require.body.email;
-    const password = require.body.password;
-    strMssg = "";
+// app.post("/api/newUser", (require, response) => {
+//     const name = require.body.name;
+//     const email = require.body.email;
+//     const password = require.body.password;
+//     strMssg = "";
 
-    const sqlInsert = "INSERT INTO Account (UserID, Name, Email, Password) VALUES (?,?,?,?)";
-    db.query(sqlInsert, ['',name, email, password], function (err, rows) {
-        if (err) throw err;
-        console.log("Success! " + JSON.stringify(rows));
-      });  
-    const sqlQUERY = "SELECT * FROM Account WHERE email LIKE '"+email +"'";
-    db.query(sqlQUERY,(err, rows) => {
-        if (err) 
-        console.log(rows);
-        response.send(rows);
-    })
-});
+//     const sqlInsert = "INSERT INTO Account (UserID, Name, Email, Password) VALUES (?,?,?,?)";
+//     db.query(sqlInsert, ['',name, email, password], function (err, rows) {
+//         if (err) throw err;
+//         console.log("Success! " + JSON.stringify(rows));
+//       });  
+//     const sqlQUERY = "SELECT * FROM Account WHERE email LIKE '"+email +"'";
+//     db.query(sqlQUERY,(err, rows) => {
+//         if (err) 
+//         console.log(rows);
+//         response.send(rows);
+//     })
+// });
 
-app.post("/api/checkUser", (require, response) => {
-    email = require.body.email;
-    password = require.body.password;
+// app.post("/api/checkUser", (require, response) => {
+//     email = require.body.email;
+//     password = require.body.password;
     
-    const sqlSearch = "SELECT * FROM Account WHERE Email LIKE '" + email+"'" + "AND Password LIKE '" + password+"'";
-    db.query(sqlSearch, function (err, rows) {
-        if (err) throw err;
-        response.send(rows);
+//     const sqlSearch = "SELECT * FROM Account WHERE Email LIKE '" + email+"'" + "AND Password LIKE '" + password+"'";
+//     db.query(sqlSearch, function (err, rows) {
+//         if (err) throw err;
+//         response.send(rows);
         
-      });
-      console.log("Clicked Lookup ");
-});
+//       });
+//       console.log("Clicked Lookup ");
+// });
+
+// app.listen(3002, () => {
+//     console.log("running on port 3002");
+// })
 
 
+// // DELIMITER //
+// // create TRIGGER uniqueSafeInsert
+// //     before insert on Song
+// //     for each row
+// //     begin
+// //     if 0 < (select count(*) from Song where Song.Song_Name = NEW.Song_Name and Song.ArtistID = New.ArtistID) then
+// //         SIGNAL SQLSTATE '45000'
+// //         SET message_text  = 'Song with same name and artist already exists, update existing records instead.';
+// //     end if;
+// //     if 0 < (select count(*) from Song where Song.ArtistID = New.ArtistID) then
+// //         set NEW.SongId = (SELECT UUID());
+// //         update artist set song_num = song_num + 1
+// //         where artist.Name = NEW.ArtistId;
+// //     else  
+// //         set NEW.SongId = (SELECT UUID());
+// //         Insert into artist values((SELECT UUID()), new.ArtistID, 1);
+// //     end if;
+// // end;
+// // DELIMITER //
+// // create TRIGGER newAccount
+// //     before insert on Account
+// //     for each row
+// //     begin
 
-// DELIMITER //
-// create TRIGGER uniqueSafeInsert
-//     before insert on Song
-//     for each row
-//     begin
-//     if 0 < (select count(*) from Song where Song.Song_Name = NEW.Song_Name and Song.ArtistID = New.ArtistID) then
-//         SIGNAL SQLSTATE '45000'
-//         SET message_text  = 'Song with same name and artist already exists, update existing records instead.';
-//     end if;
-//     if 0 < (select count(*) from Song where Song.ArtistID = New.ArtistID) then
-//         set NEW.SongId = (SELECT UUID());
-//         update artist set song_num = song_num + 1
-//         where artist.Name = NEW.ArtistId;
-//     else  
-//         set NEW.SongId = (SELECT UUID());
-//         Insert into artist values((SELECT UUID()), new.ArtistID, 1);
-//     end if;
-// end;
-// DELIMITER //
-// create TRIGGER newAccount
-//     before insert on Account
-//     for each row
-//     begin
+// //     if 0 < (select count(*) from Account where Account.Email = NEW.Email) then
+// //         SIGNAL SQLSTATE '45000'
+// //         SET message_text  = 'Email Already in use.';
+// //     end if;
+// //     set NEW.UserID = (SELECT UUID());
+// // end;
+// exports.app = functions.https.onRequest(app)
 
-//     if 0 < (select count(*) from Account where Account.Email = NEW.Email) then
-//         SIGNAL SQLSTATE '45000'
-//         SET message_text  = 'Email Already in use.';
-//     end if;
-//     set NEW.UserID = (SELECT UUID());
-// end;
+

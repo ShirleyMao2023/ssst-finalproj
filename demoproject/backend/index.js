@@ -6,7 +6,7 @@ const cors = require("cors");
 
 
 var db = mysql.createConnection({
-    socketPath: '/cloudsql/ssst-finalproj:us-central1:ssst-proj',
+    socketPath: 'ssst-finalproj:us-central1:ssst-proj',
     host:'35.226.42.138',
     user: 'root',
     password:'Mhz1KjwHvseamjt7',

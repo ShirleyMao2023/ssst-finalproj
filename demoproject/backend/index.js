@@ -8,15 +8,14 @@ const cors = require("cors");
 // Database Connection for Production
 
 let config = {
-    user: 'root',
-    password:'Mhz1KjwHvseamjt7',
-    database:'SongSearch',
+    user: process.env.SQL_USER,
+    database: process.env.SQL_DATABASE,
+    password: process.env.SQL_PASSWORD,
 }
 
-// if (process.env.INSTANCE_CONNECTION_NAME && process.env.NODE_ENV === 'production') {
-  
-// }
-config.socketPath = `/cloudsql/ssst-finalproj:us-central1:ssst-proj`;
+if (process.env.INSTANCE_CONNECTION_NAME && process.env.NODE_ENV === 'production') {
+  config.socketPath = `/cloudsql/${process.env.INSTANCE_CONNECTION_NAME}`;
+}
 
 let connection = mysql.createConnection(config);
 

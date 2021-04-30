@@ -7,36 +7,53 @@ const cors = require("cors");
 
 // Database Connection for Production
 
-let config = {
-    user: process.env.DB_USER,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASS,
-}
+// let config = {
+//     user: process.env.DB_USER,
+//     database: process.env.DB_NAME,
+//     password: process.env.DB_PASS,
+// }
 
-if (process.env.INSTANCE_CONNECTION_NAME) {
-  config.socketPath = `/cloudsql/${process.env.INSTANCE_CONNECTION_NAME}`;
-}
+// if (process.env.INSTANCE_CONNECTION_NAME) {
+//   config.socketPath = `/cloudsql/${process.env.INSTANCE_CONNECTION_NAME}`;
+// }
 
-let connection = mysql.createConnection(config);
 
-// Database Connection for Development
+// let connection = mysql.createConnection(config);
 
-// var db = mysql.createConnection({
-//     host:'35.226.42.138',
 
-// })
 
-connection.connect(function(err) {
-    if (err) throw err;
-    var sql = "SELECT Count(*) FROM artist";
-    db.query(sql, function (err, rows) {
-      if (err) throw err;
-      console.log(JSON.stringify(rows) + " Things in Artist Table");
-    });
-    console.log("connection success");
+// // Database Connection for Development
+
+// // var db = mysql.createConnection({
+// //     host:'35.226.42.138',
+
+// // })
+
+// connection.connect(function(err) {
+//     if (err) throw err;
+//     var sql = "SELECT Count(*) FROM artist";
+//     db.query(sql, function (err, rows) {
+//       if (err) throw err;
+//       console.log(JSON.stringify(rows) + " Things in Artist Table");
+//     });
+//     console.log("connection success");
+//   });
+
+// require('dotenv').config();
+
+const createUnixSocketPool = async config => {
+  const dbSocketPath = process.env.DB_SOCKET_PATH || '/cloudsql';
+
+  // Establish a connection to the database
+  return await mysql.createPool({
+    user: process.env.DB_USER, // e.g. 'my-db-user'
+    password: process.env.DB_PASS, // e.g. 'my-db-password'
+    database: process.env.DB_NAME, // e.g. 'my-database'
+    // If connecting via unix domain socket, specify the path
+    socketPath: `${dbSocketPath}/${process.env.CLOUD_SQL_CONNECTION_NAME}`,
+    // Specify additional properties here.
   });
-
-require('dotenv').config();
+};
 
 app.get('/', (require, response) => {
     response.send("Hello world!!!");
